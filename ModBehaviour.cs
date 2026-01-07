@@ -198,15 +198,33 @@ namespace DuckNav
             Image iconImg = arrowObj.GetComponent<Image>();
             if (iconImg != null) iconImg.color = poi.Color;
 
+            // --- ADJUSTED SCALING LOGIC ---
+
+            // 1. Calculate tVal (0.0 to 1.0)
+            // We lower the max distance to 150m so the transition happens quickly.
+            // Anything >150m will be at max effect.
+            float maxDist = 150f;
+            float tVal = Mathf.Clamp01(distance / maxDist);
+
+            // 2. Apply Size Scaling 
+            // Drastic change: 100% size at 0m -> 60% size at 150m+
+            float scale = Mathf.Lerp(1.0f, 0.6f, tVal);
+            arrowObj.transform.localScale = new Vector3(scale, scale, 1f);
+
+            // 3. Apply Radius Scaling
+            // Drastic change: 200px radius at 0m -> 400px radius at 150m+
+            // This pushes distant markers much closer to the edge of the screen.
+            float dynamicRadius = Mathf.Lerp(200f, 400f, tVal);
+
             // Calculate Screen Position
-            float radarRadius = 250f;
             float rad = angle * Mathf.Deg2Rad;
-            float screenX = Mathf.Sin(rad) * radarRadius;
-            float screenY = Mathf.Cos(rad) * radarRadius;
+            float screenX = Mathf.Sin(rad) * dynamicRadius;
+            float screenY = Mathf.Cos(rad) * dynamicRadius;
 
             RectTransform rt = arrowObj.GetComponent<RectTransform>();
             rt.anchoredPosition = new Vector2(screenX, screenY);
 
+            // Reset rotation so the icon stays upright
             rt.localEulerAngles = Vector3.zero;
         }
 
